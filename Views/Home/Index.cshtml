@@ -1,0 +1,118 @@
+@model CargaDatos.Web.Models.CargaDatosViewModel
+
+@{
+    ViewData["Title"] = "Carga de Datos";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-database"></i> Sistema de Carga de Datos
+                    </h3>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model?.Mensaje))
+                    {
+                        <div class="alert @(Model.EsError ? "alert-danger" : "alert-success") alert-dismissible fade show" role="alert">
+                            <i class="fas @(Model.EsError ? "fa-exclamation-circle" : "fa-check-circle")"></i>
+                            @Model.Mensaje
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <form asp-action="EjecutarCarga" method="post" id="formCarga">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Selecciona el tipo de carga:</label>
+
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="TipoCarga" id="radioTotal"
+                                       value="1" checked onchange="actualizarFormulario()">
+                                <label class="form-check-label" for="radioTotal">
+                                    <strong>Carga Total</strong> - Carga todos los datos
+                                </label>
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="TipoCarga" id="radioDistrito"
+                                       value="2" onchange="actualizarFormulario()">
+                                <label class="form-check-label" for="radioDistrito">
+                                    <strong>Carga por Distrito</strong> - Introduce el nombre del distrito
+                                </label>
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="TipoCarga" id="radioCoordinadora"
+                                       value="3" onchange="actualizarFormulario()">
+                                <label class="form-check-label" for="radioCoordinadora">
+                                    <strong>Carga por Coordinadora</strong> - Selecciona una coordinadora específica
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-4" id="divDistrito" style="display: none;">
+                            <label for="DistritoSeleccionado" class="form-label fw-bold">Distrito:</label>
+                            <input type="text" class="form-control" id="DistritoSeleccionado"
+                                   name="DistritoSeleccionado" placeholder="Escribe el nombre del distrito"
+                                   value="@Model?.DistritoSeleccionado" />
+                        </div>
+
+                        <div class="mb-4" id="divCoordinadora" style="display: none;">
+                            <label for="CoordinadoraSeleccionada" class="form-label fw-bold">Coordinadora:</label>
+                            <select class="form-select" id="CoordinadoraSeleccionada" name="CoordinadoraSeleccionada">
+                                <option value="">-- Selecciona una coordinadora --</option>
+                                @if (Model?.Coordinadoras != null)
+                                {
+                                    foreach (var coordinadora in Model.Coordinadoras)
+                                    {
+                                        <option value="@coordinadora.Codigo"
+                                                selected="@(Model.CoordinadoraSeleccionada == coordinadora.Codigo ? "selected" : null)">
+                                            @coordinadora.Nombre
+                                        </option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-play-circle"></i> Ejecutar Carga
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-muted">
+                    <small>
+                        <i class="fas fa-info-circle"></i>
+                        El sistema ejecuta automáticamente una carga cada 7 horas.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function actualizarFormulario() {
+            const tipoCarga = document.querySelector('input[name="TipoCarga"]:checked').value;
+            const divDistrito = document.getElementById('divDistrito');
+            const divCoordinadora = document.getElementById('divCoordinadora');
+
+            divDistrito.style.display = 'none';
+            divCoordinadora.style.display = 'none';
+
+            if (tipoCarga === '2') {
+                divDistrito.style.display = 'block';
+            } else if (tipoCarga === '3') {
+                divCoordinadora.style.display = 'block';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            actualizarFormulario();
+        });
+    </script>
+}
