@@ -3,71 +3,303 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Sistema de Carga de Datos</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>@ViewData["Title"] - Cargador Horario</title>
     
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #3a6ea5;
+            padding: 20px;
         }
-        
-        .card {
-            border-radius: 15px;
-            border: none;
+
+        .ventana-principal {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ece9d8;
+            border: 2px solid #0054e3;
+            box-shadow: 3px 3px 10px rgba(0,0,0,0.3);
         }
-        
-        .card-header {
-            border-radius: 15px 15px 0 0 !important;
+
+        .barra-titulo {
+            background: linear-gradient(180deg, #0997ff 0%, #0053ee 100%);
+            color: white;
+            padding: 6px 12px;
+            font-weight: bold;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
         }
-        
-        .form-check-input:checked {
-            background-color: #667eea;
-            border-color: #667eea;
+
+        .icono-ventana {
+            margin-right: 5px;
         }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
+
+        .titulo-ventana {
+            flex-grow: 1;
         }
-        
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+
+        .contenido-ventana {
+            padding: 15px;
+        }
+
+        .mensaje-estado {
+            background: white;
+            border: 1px solid #7f9db9;
+            padding: 8px;
+            margin-bottom: 15px;
+            font-size: 11px;
+        }
+
+        .mensaje-estado.error {
+            background: #ffdddd;
+            color: #c00;
+        }
+
+        .seccion-tipo-carga fieldset {
+            border: 1px solid #7f9db9;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .seccion-tipo-carga legend {
+            font-size: 11px;
+            font-weight: bold;
+            padding: 0 5px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        .radio-group label {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .seccion-financiacion {
+            display: grid;
+            grid-template-columns: auto 1fr auto auto;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 11px;
+        }
+
+        .combo-financiacion {
+            width: 100%;
+            height: 22px;
+            border: 1px solid #7f9db9;
+        }
+
+        .input-codprograma {
+            width: 100px;
+            height: 20px;
+            border: 1px solid #7f9db9;
+        }
+
+        .seccion-parametros fieldset {
+            border: 1px solid #7f9db9;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .seccion-parametros legend {
+            font-size: 11px;
+            font-weight: bold;
+            padding: 0 5px;
+        }
+
+        .parametros-contenido {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 15px;
+        }
+
+        .calendario-container {
+            background: white;
+            border: 1px solid #7f9db9;
+            padding: 8px;
+        }
+
+        .calendario-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .btn-mes {
+            background: #d4d0c8;
+            border: 1px solid #7f9db9;
+            width: 25px;
+            height: 20px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+
+        .mes-actual {
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: capitalize;
+        }
+
+        .calendario {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        .calendario th {
+            background: #d4d0c8;
+            padding: 3px;
+            border: 1px solid #7f9db9;
+            font-weight: bold;
+        }
+
+        .calendario td {
+            border: 1px solid #ccc;
+            padding: 4px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .calendario td.dia:hover {
+            background: #b5d5ff;
+        }
+
+        .calendario td.dia-vacio {
+            background: #f0f0f0;
+            cursor: default;
+        }
+
+        .calendario td.dia-hoy {
+            background: #ffeb3b;
+            font-weight: bold;
+        }
+
+        .calendario td.seleccionado {
+            background: #0078d7;
+            color: white;
+            font-weight: bold;
+        }
+
+        .fecha-hoy {
+            margin-top: 5px;
+            text-align: center;
+            font-size: 10px;
+            color: red;
+        }
+
+        .campos-parametros {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .campo-grupo {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .campo-grupo label {
+            font-size: 10px;
+            margin-bottom: 2px;
+        }
+
+        .campo-grupo input {
+            height: 22px;
+            border: 1px solid #7f9db9;
+            padding: 2px 4px;
+            font-size: 11px;
+        }
+
+        .input-anio {
+            width: 70px;
+        }
+
+        .input-numero {
+            width: 60px;
+        }
+
+        .input-fecha {
+            width: 100px;
+        }
+
+        .expresion-auxiliar {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+        }
+
+        .input-exp {
+            flex-grow: 1;
+            height: 22px;
+            border: 1px solid #7f9db9;
+            padding: 2px 4px;
+        }
+
+        .nota {
+            font-size: 10px;
+            font-style: italic;
+            margin-top: 5px;
+            color: #666;
+        }
+
+        .checkboxes {
+            margin-top: 10px;
+            display: flex;
+            gap: 15px;
+            font-size: 11px;
+        }
+
+        .checkboxes label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .botones-accion {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .botones-accion button {
+            width: 120px;
+            height: 28px;
+            font-size: 12px;
+            font-weight: bold;
+            border: 2px outset #d4d0c8;
+            background: #d4d0c8;
+            cursor: pointer;
+        }
+
+        .botones-accion button:active {
+            border-style: inset;
+        }
+
+        .btn-generar:hover {
+            background: #e5e5e5;
+        }
+
+        .btn-salir:hover {
+            background: #e5e5e5;
         }
     </style>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-dark bg-dark mb-3">
-            <div class="container">
-                <a class="navbar-brand" href="/">
-                    <i class="fas fa-database"></i> Sistema de Carga de Datos
-                </a>
-            </div>
-        </nav>
-    </header>
-    
-    <main role="main" class="pb-3">
-        @RenderBody()
-    </main>
-
-    <footer class="text-center text-white mt-5">
-        <div class="container">
-            <small>&copy; 2024 - Sistema de Carga de Datos</small>
-        </div>
-    </footer>
-
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+    @RenderBody()
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

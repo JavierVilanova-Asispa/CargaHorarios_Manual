@@ -1,4 +1,4 @@
-namespace CargaDatos.Web.Models
+namespace CargadorHorario.Web.Models
 {
     public class CargaDatosViewModel
     {

@@ -1,103 +1,78 @@
 using Microsoft.AspNetCore.Mvc;
-using CargaDatos.Web.Models;
-using CargaDatos.Web.Services;
-using System.Data;
+using CargadorHorario.Web.Models;
+using CargadorHorario.Web.Services;
 
-namespace CargaDatos.Web.Controllers
+namespace CargadorHorario.Web.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private readonly ICargaDatosService _cargaDatosService;
+        private readonly ICargaHorarioService _cargaHorarioService;
 
-        private const int NUM_SEMANAS = 2;
-        private static bool _yaCargado = false;
-
-        public HomeController(ILogger<HomeController> logger, ICargaDatosService cargaDatosService)
+        public HomeController(ILogger<HomeController> logger, ICargaHorarioService cargaHorarioService)
         {
             _logger = logger;
-            _cargaDatosService = cargaDatosService;
+            _cargaHorarioService = cargaHorarioService;
         }
 
         public async Task<IActionResult> Index()
         {
-            var model = new CargaDatosViewModel
+            var model = new CargaHorarioViewModel
             {
-                Coordinadoras = await _cargaDatosService.ObtenerCoordinadorasAsync()
+                Financiaciones = await _cargaHorarioService.ObtenerFinanciacionesAsync(),
+                Mes = DateTime.Now.Month,
+                Anio = DateTime.Now.Year,
+                Mensaje = "NO SE PUDO REALIZAR LA CARGA DE HORARIO DE LA FECHA: 0.00.00"
             };
             return View(model);
         }
 
         [HttpPost]
-        public async Task<IActionResult> EjecutarCarga(CargaDatosViewModel model)
+        public async Task<IActionResult> Generar(CargaHorarioViewModel model)
         {
             try
             {
-                if (!_yaCargado)
-                {
-                    _yaCargado = true;
-                    DataTable dt = await _cargaDatosService.ObtenerFechasNoCargadasAsync(NUM_SEMANAS);
-                    int numIteraciones = 0;
-                    string resultado = string.Empty;
-
-                    foreach (DataRow row in dt.Rows)
-                    {
-                        numIteraciones++;
-                        DateTime fecha = Convert.ToDateTime(row["fecha"].ToString());
-
-                        switch (model.TipoCarga)
-                        {
-                            case TipoCarga.Total:
-                                resultado = await _cargaDatosService.CargarDatosTotal(fecha, numIteraciones);
-                                break;
-
-                            case TipoCarga.PorDistrito:
-                                if (string.IsNullOrWhiteSpace(model.DistritoSeleccionado))
-                                {
-                                    model.Mensaje = "Por favor, introduce el nombre del distrito";
-                                    model.EsError = true;
-                                    model.Coordinadoras = await _cargaDatosService.ObtenerCoordinadorasAsync();
-                                    return View("Index", model);
-                                }
-                                resultado = await _cargaDatosService.CargarDatosPorDistrito(fecha, numIteraciones, model.DistritoSeleccionado);
-                                break;
-
-                            case TipoCarga.PorCoordinadora:
-                                if (string.IsNullOrEmpty(model.CoordinadoraSeleccionada))
-                                {
-                                    model.Mensaje = "Por favor, selecciona una coordinadora";
-                                    model.EsError = true;
-                                    model.Coordinadoras = await _cargaDatosService.ObtenerCoordinadorasAsync();
-                                    return View("Index", model);
-                                }
-                                resultado = await _cargaDatosService.CargarDatosPorCoordinadora(fecha, numIteraciones, model.CoordinadoraSeleccionada);
-                                break;
-                        }
-                    }
-
-                    model.Mensaje = resultado;
-                    model.EsError = false;
-                    model.Coordinadoras = await _cargaDatosService.ObtenerCoordinadorasAsync();
-                    return View("Index", model);
-                }
-                else
-                {
-                    Exception ex = new("La carga ya ha sido realizada");
-                    _logger.LogError(ex, ex.Message);
-                    model.Mensaje = $"Error al ejecutar la carga: {ex.Message}";
-                    model.EsError = true;
-                    model.Coordinadoras = await _cargaDatosService.ObtenerCoordinadorasAsync();
-                    return View("Index", model);
-                }
+                var resultado = await _cargaHorarioService.GenerarCargaHorarioAsync(model);
+                
+                model.Mensaje = resultado;
+                model.EsError = false;
+                model.Financiaciones = await _cargaHorarioService.ObtenerFinanciacionesAsync();
+                
+                return View("Index", model);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al ejecutar la carga de datos");
-                model.Mensaje = $"Error al ejecutar la carga: {ex.Message}";
+                _logger.LogError(ex, "Error al generar carga de horario");
+                
+                model.Mensaje = $"Error al generar la carga: {ex.Message}";
                 model.EsError = true;
-                model.Coordinadoras = await _cargaDatosService.ObtenerCoordinadorasAsync();
+                model.Financiaciones = await _cargaHorarioService.ObtenerFinanciacionesAsync();
+                
                 return View("Index", model);
             }
+        }
+
+        [HttpPost]
+        public IActionResult Salir()
+        {
+            // Redirigir a una página de cierre o simplemente recargar
+            return RedirectToAction("Index");
+        }
+
+        [HttpGet]
+        public IActionResult CambiarMes(int mes, int anio)
+        {
+            // Devuelve el calendario para el mes seleccionado
+            var primerDia = new DateTime(anio, mes, 1);
+            var ultimoDia = new DateTime(anio, mes, DateTime.DaysInMonth(anio, mes));
+            
+            return Json(new
+            {
+                mes = mes,
+                anio = anio,
+                primerDia = primerDia.Day,
+                diasEnMes = DateTime.DaysInMonth(anio, mes)
+            });
         }
     }
 }

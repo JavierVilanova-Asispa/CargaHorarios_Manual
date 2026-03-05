@@ -1,12 +1,12 @@
 {
   "profiles": {
-    "CargaDatos.Web": {
+    "CargadorHorario.Web": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "https://localhost:52723;http://localhost:52724"
+      "applicationUrl": "https://localhost:55632;http://localhost:55633"
     }
   }
 }

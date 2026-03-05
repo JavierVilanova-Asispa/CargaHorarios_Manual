@@ -1,181 +1,262 @@
-# Sistema de Carga de Datos - ASP.NET Core 8
+# Cargador Horario Semanal - ASP.NET Core 8
 
-Aplicación web desarrollada en C# .NET 8 para gestionar la carga de datos con diferentes opciones.
+Aplicación web desarrollada en C# .NET 8 para la gestión de carga de horarios semanales.
 
 ## Características
 
-- **Carga Total**: Ejecuta una carga completa de datos
-- **Carga por Distrito**: Permite seleccionar un distrito específico para la carga
-- **Carga por Coordinadora**: Permite seleccionar una coordinadora específica
-- **Tarea Programada**: Ejecuta automáticamente un método cada 7 horas
+- **Interfaz similar a aplicación de escritorio Windows clásica**
+- **Tipos de carga**: Coordinadora, Distrito, o Todos
+- **Calendario mensual interactivo** con navegación entre meses
+- **Parámetros configurables**: año, número de semana, días, etc.
+- **Conexión a base de datos SQL Server**
+- **Listo para implementar la lógica de generación**
 
 ## Requisitos
 
 - Visual Studio 2022 o superior
 - .NET 8 SDK
-- Windows, Linux o macOS
+- SQL Server (para base de datos)
 
 ## Estructura del Proyecto
 
 ```
-CargaDatos.Web/
+CargadorHorario.Web/
 ├── Controllers/
 │   └── HomeController.cs          # Controlador principal
 ├── Models/
-│   └── CargaDatosViewModel.cs     # Modelo de vista
+│   └── CargaHorarioViewModel.cs   # Modelo de vista
 ├── Services/
-│   ├── ICargaDatosService.cs      # Interfaz del servicio
-│   ├── CargaDatosService.cs       # Implementación del servicio
-│   └── CargaDatosProgramadaService.cs  # Servicio en segundo plano (cada 7 horas)
+│   ├── ICargaHorarioService.cs    # Interfaz del servicio
+│   └── CargaHorarioService.cs     # Lógica de negocio
+├── Data/
+│   ├── IDataService.cs            # Interfaz de acceso a datos
+│   └── DataService.cs             # Implementación BD
 ├── Views/
 │   ├── Home/
 │   │   └── Index.cshtml           # Vista principal
 │   └── Shared/
-│       └── _Layout.cshtml         # Layout
-├── Program.cs                      # Configuración de la aplicación
-└── CargaDatos.Web.csproj          # Archivo de proyecto
+│       └── _Layout.cshtml         # Layout con estilos
+├── Program.cs                      # Configuración
+├── appsettings.json                # Configuración producción
+└── appsettings.Development.json    # Configuración desarrollo
 ```
 
-## Cómo usar
+## Configuración
 
-### Abrir en Visual Studio 2022
+### 1. Cadena de Conexión
 
-1. Abre Visual Studio 2022
-2. Selecciona "Abrir un proyecto o solución"
-3. Navega a la carpeta del proyecto y selecciona `CargaDatos.Web.csproj`
-4. Presiona F5 para ejecutar la aplicación
+Edita `appsettings.json` o `appsettings.Development.json`:
 
-### Ejecutar desde línea de comandos
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=TU_SERVIDOR;Database=TU_BD;User Id=USUARIO;Password=PASSWORD;TrustServerCertificate=True;"
+  }
+}
+```
+
+### 2. Configurar Financiaciones
+
+En `CargaHorarioService.cs`, método `ObtenerFinanciacionesAsync()`:
+
+```csharp
+var consulta = @"
+    SELECT CodigoFinanciacion AS codigo, 
+           NombreFinanciacion AS nombre 
+    FROM Financiaciones
+    ORDER BY NombreFinanciacion";
+```
+
+Reemplaza con tu consulta SQL real.
+
+## Implementar la Lógica de Generación
+
+El método `GenerarCargaHorarioAsync` en `CargaHorarioService.cs` está preparado para que implementes tu lógica:
+
+```csharp
+public async Task<string> GenerarCargaHorarioAsync(CargaHorarioViewModel model)
+{
+    // Aquí tienes acceso a todos los parámetros:
+    // - model.TipoCarga (Coordinadora, Distrito, Todos)
+    // - model.FinanciacionSeleccionada
+    // - model.CodPrograma
+    // - model.Anio
+    // - model.Mes
+    // - model.NumSemanaGeneral
+    // - model.PrimerDiaSemanaGeneral
+    // - model.NumSemanasAGenerar
+    // - model.FechaDia
+    // - model.ExpAuxiliar
+    // - model.ActualizarTablaDiaSemana
+    // - model.ProyeccionSeparada
+    
+    // TODO: Implementa tu lógica aquí
+    // Ejemplo:
+    var parametros = new Dictionary<string, object>
+    {
+        { "@TipoCarga", (int)model.TipoCarga },
+        { "@Financiacion", model.FinanciacionSeleccionada ?? string.Empty },
+        { "@CodPrograma", model.CodPrograma ?? string.Empty },
+        { "@Anio", model.Anio },
+        { "@Mes", model.Mes }
+        // ... más parámetros
+    };
+    
+    var resultado = await _dataService.EjecutarProcedimientoAsync(
+        "sp_GenerarCargaHorario", 
+        parametros
+    );
+    
+    return "Carga generada exitosamente";
+}
+```
+
+## Ejecutar la Aplicación
+
+### Desde Visual Studio 2022
+
+1. Abre `CargadorHorario.Web.sln`
+2. Configura la cadena de conexión
+3. Presiona F5
+
+### Desde línea de comandos
 
 ```bash
 cd [ruta-del-proyecto]
+dotnet restore
 dotnet run
 ```
 
-La aplicación se ejecutará en: `https://localhost:5001` o `http://localhost:5000`
+La aplicación estará disponible en: `https://localhost:5001`
 
-## Funcionalidades
+## Características de la Interfaz
 
-### 1. Interfaz Web
+### Calendario Interactivo
 
-La interfaz permite:
-- Seleccionar el tipo de carga mediante radio buttons
-- Mostrar desplegables dinámicos según la selección
-- Ejecutar la carga con un solo clic
-- Ver mensajes de éxito o error
+- **Navegación**: Botones ◄ y ► para cambiar de mes
+- **Día actual**: Resaltado en amarillo
+- **Selección**: Click en cualquier día para seleccionarlo
+- **Visualización**: Formato de calendario mensual estándar
 
-### 2. Servicio de Carga
+### Tipo de Carga
 
-El servicio `CargaDatosService` implementa tres métodos:
-- `CargarDatosTotal()`: Para carga completa
-- `CargarDatosPorDistrito(distrito)`: Para carga por distrito
-- `CargarDatosPorCoordinadora(coordinadora)`: Para carga por coordinadora
+- **COORDINADORA**: Carga por coordinadora específica
+- **DISTRITO**: Carga por distrito
+- **TODOS**: Carga general
 
-**IMPORTANTE**: Los métodos están marcados con `// TODO:` para que implementes tu lógica específica.
+### Parámetros Disponibles
 
-### 3. Tarea Programada
+1. **FINANCIACIÓN**: Desplegable con financiaciones de BD
+2. **CodPrograma**: Código de programa libre
+3. **Año**: Año de la carga
+4. **NumSemana general**: Número de semana
+5. **1er día semana general**: Primer día
+6. **Nº semanas a generar**: Cantidad de semanas (mínimo 1)
+7. **Día**: Fecha específica en formato dd/mm/aaaa
+8. **ExpAuxiliar**: Expresión auxiliar
+9. **Actualizar tabla TBL_DiaSemana**: Checkbox
+10. **Proyección separada**: Checkbox
 
-El servicio `CargaDatosProgramadaService` ejecuta automáticamente el método `EjecutarCargaProgramada()` cada 7 horas.
+### Botones
 
-**IMPORTANTE**: El método está vacío y marcado con `// TODO:` para que implementes tu lógica.
+- **GENERAR**: Ejecuta la carga (llama a `GenerarCargaHorarioAsync`)
+- **SALIR**: Cierra o recarga la aplicación
 
-## Personalización
+## Acceso a Base de Datos
 
-### Cambiar los Distritos
+El servicio `DataService` proporciona 4 métodos:
 
-Edita el método `ObtenerDistritos()` en `CargaDatosService.cs`:
-
+### 1. Ejecutar Consulta (SELECT)
 ```csharp
-public List<string> ObtenerDistritos()
-{
-    return new List<string>
-    {
-        "Tu Distrito 1",
-        "Tu Distrito 2",
-        // ...
-    };
-}
+var consulta = "SELECT * FROM Tabla WHERE Campo = @Valor";
+var parametros = new Dictionary<string, object> { { "@Valor", valor } };
+var resultado = await _dataService.EjecutarConsultaAsync(consulta, parametros);
 ```
 
-### Cambiar las Coordinadoras
-
-Edita el método `ObtenerCoordinadoras()` en `CargaDatosService.cs`:
-
+### 2. Ejecutar Procedimiento Almacenado
 ```csharp
-public List<string> ObtenerCoordinadoras()
+var parametros = new Dictionary<string, object>
 {
-    return new List<string>
-    {
-        "Tu Coordinadora 1",
-        "Tu Coordinadora 2",
-        // ...
-    };
-}
+    { "@Param1", valor1 },
+    { "@Param2", valor2 }
+};
+var resultado = await _dataService.EjecutarProcedimientoAsync("sp_Nombre", parametros);
 ```
 
-### Implementar la Lógica de Carga
-
-Busca los comentarios `// TODO:` en `CargaDatosService.cs` e implementa tu lógica:
-
+### 3. Ejecutar Comando (INSERT, UPDATE, DELETE)
 ```csharp
-public async Task<string> CargarDatosTotal()
+var comando = "UPDATE Tabla SET Campo = @Valor WHERE Id = @Id";
+var parametros = new Dictionary<string, object>
 {
-    // TODO: Implementar lógica de carga total
-    // Ejemplo:
-    // - Conectar a base de datos
-    // - Ejecutar procedimientos almacenados
-    // - Procesar archivos
-    // - etc.
-}
+    { "@Valor", nuevoValor },
+    { "@Id", id }
+};
+var filasAfectadas = await _dataService.EjecutarComandoAsync(comando, parametros);
 ```
 
-### Implementar la Tarea Programada
-
-Edita el método `EjecutarCargaProgramada()` en `CargaDatosProgramadaService.cs`:
-
+### 4. Ejecutar Escalar (COUNT, MAX, etc.)
 ```csharp
-private async Task EjecutarCargaProgramada()
-{
-    // TODO: Implementar tu lógica aquí
-    // Este método se ejecuta automáticamente cada 7 horas
-}
-```
-
-### Cambiar el Intervalo de Ejecución
-
-Si deseas cambiar las 7 horas a otro intervalo, edita la línea en `CargaDatosProgramadaService.cs`:
-
-```csharp
-private readonly TimeSpan _intervalo = TimeSpan.FromHours(7); // Cambiar aquí
+var consulta = "SELECT COUNT(*) FROM Tabla";
+var total = await _dataService.EjecutarEscalarAsync(consulta);
 ```
 
 ## Logs
 
-La aplicación registra logs automáticamente:
-- En desarrollo: Se muestran en la consola
-- En producción: Se pueden configurar diferentes destinos (archivo, base de datos, etc.)
+La aplicación registra automáticamente:
+- Inicio y fin de generación de carga
+- Parámetros utilizados
+- Errores que ocurran
+- Consultas ejecutadas
 
-Los logs incluyen:
-- Inicio y fin de cada carga
-- Ejecución de la tarea programada
-- Errores que puedan ocurrir
+Los logs aparecen en la consola durante el desarrollo.
 
-## Tecnologías Utilizadas
+## Personalización
 
-- ASP.NET Core 8
-- Bootstrap 5.3
-- Font Awesome 6.4
-- Razor Pages
-- Dependency Injection
-- Background Services (Hosted Services)
+### Cambiar el Mensaje Inicial
 
-## Notas
+En `HomeController.cs`, método `Index()`:
 
-- La tarea programada se inicia automáticamente al ejecutar la aplicación
-- Los logs se muestran en la consola durante el desarrollo
-- La interfaz es totalmente responsive y funciona en dispositivos móviles
-- Los desplegables se actualizan dinámicamente según la selección
+```csharp
+Mensaje = "Tu mensaje personalizado aquí"
+```
+
+### Modificar Estilos
+
+Los estilos están en `Views/Shared/_Layout.cshtml` dentro de la etiqueta `<style>`.
+
+Para cambiar colores, tamaños, etc., edita las clases CSS correspondientes.
+
+### Agregar Validaciones
+
+En el controlador, antes de llamar al servicio:
+
+```csharp
+if (string.IsNullOrWhiteSpace(model.CodPrograma))
+{
+    model.Mensaje = "El código de programa es obligatorio";
+    model.EsError = true;
+    return View("Index", model);
+}
+```
+
+## Notas Importantes
+
+1. **La lógica de generación está pendiente de implementar** en `GenerarCargaHorarioAsync()`
+2. **Configura tu cadena de conexión** antes de ejecutar
+3. **La tabla de Financiaciones** debe existir o usa datos de ejemplo
+4. **Todos los parámetros del formulario** están disponibles en el modelo
 
 ## Soporte
 
-Para cualquier duda o problema, revisa los logs de la aplicación o contacta al equipo de desarrollo.
+Para problemas o dudas:
+1. Revisa los logs en la consola
+2. Verifica la cadena de conexión
+3. Asegúrate de que las tablas existen en la BD
+
+## Tecnologías
+
+- ASP.NET Core 8
+- C# 12
+- Razor Pages
+- Microsoft.Data.SqlClient 5.2.0
+- CSS3 (estilo Windows clásico)

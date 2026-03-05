@@ -4,13 +4,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // Registrar el servicio de acceso a datos
-builder.Services.AddScoped<CargaDatos.Web.Data.IDataService, CargaDatos.Web.Data.DataService>();
+builder.Services.AddScoped<CargadorHorario.Web.Data.IDataService, CargadorHorario.Web.Data.DataService>();
 
-// Registrar el servicio de carga de datos (SCOPED para poder usar DataService)
-builder.Services.AddScoped<ICargaDatosService, CargaDatosService>();
-
-// Registrar el servicio programado (hosted service)
-builder.Services.AddHostedService<CargaDatosProgramadaService>();
+// Registrar el servicio de carga de horarios
+builder.Services.AddScoped<ICargaHorarioService, CargaHorarioService>();
 
 var app = builder.Build();
 

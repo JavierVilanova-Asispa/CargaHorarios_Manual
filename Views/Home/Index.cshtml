@@ -1,118 +1,216 @@
-@model CargaDatos.Web.Models.CargaDatosViewModel
+@model CargadorHorario.Web.Models.CargaHorarioViewModel
 
 @{
-    ViewData["Title"] = "Carga de Datos";
+    ViewData["Title"] = "Cargador horario semanal";
+    var diasSemana = new[] { "L", "M", "X", "J", "V", "S", "D" };
+    var primerDia = new DateTime(Model.Anio, Model.Mes, 1);
+    var diasEnMes = DateTime.DaysInMonth(Model.Anio, Model.Mes);
+    var primerDiaSemana = ((int)primerDia.DayOfWeek + 6) % 7; // Lunes = 0
 }
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0">
-                        <i class="fas fa-database"></i> Sistema de Carga de Datos
-                    </h3>
-                </div>
-                <div class="card-body">
-                    @if (!string.IsNullOrEmpty(Model?.Mensaje))
-                    {
-                        <div class="alert @(Model.EsError ? "alert-danger" : "alert-success") alert-dismissible fade show" role="alert">
-                            <i class="fas @(Model.EsError ? "fa-exclamation-circle" : "fa-check-circle")"></i>
-                            @Model.Mensaje
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    }
+<div class="container-fluid">
+    <div class="ventana-principal">
+        <div class="barra-titulo">
+            <span class="icono-ventana">⚙</span>
+            <span class="titulo-ventana">Cargador horario semanal</span>
+        </div>
 
-                    <form asp-action="EjecutarCarga" method="post" id="formCarga">
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Selecciona el tipo de carga:</label>
-
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="TipoCarga" id="radioTotal"
-                                       value="1" checked onchange="actualizarFormulario()">
-                                <label class="form-check-label" for="radioTotal">
-                                    <strong>Carga Total</strong> - Carga todos los datos
-                                </label>
-                            </div>
-
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="TipoCarga" id="radioDistrito"
-                                       value="2" onchange="actualizarFormulario()">
-                                <label class="form-check-label" for="radioDistrito">
-                                    <strong>Carga por Distrito</strong> - Introduce el nombre del distrito
-                                </label>
-                            </div>
-
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="TipoCarga" id="radioCoordinadora"
-                                       value="3" onchange="actualizarFormulario()">
-                                <label class="form-check-label" for="radioCoordinadora">
-                                    <strong>Carga por Coordinadora</strong> - Selecciona una coordinadora específica
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="mb-4" id="divDistrito" style="display: none;">
-                            <label for="DistritoSeleccionado" class="form-label fw-bold">Distrito:</label>
-                            <input type="text" class="form-control" id="DistritoSeleccionado"
-                                   name="DistritoSeleccionado" placeholder="Escribe el nombre del distrito"
-                                   value="@Model?.DistritoSeleccionado" />
-                        </div>
-
-                        <div class="mb-4" id="divCoordinadora" style="display: none;">
-                            <label for="CoordinadoraSeleccionada" class="form-label fw-bold">Coordinadora:</label>
-                            <select class="form-select" id="CoordinadoraSeleccionada" name="CoordinadoraSeleccionada">
-                                <option value="">-- Selecciona una coordinadora --</option>
-                                @if (Model?.Coordinadoras != null)
-                                {
-                                    foreach (var coordinadora in Model.Coordinadoras)
-                                    {
-                                        <option value="@coordinadora.Codigo"
-                                                selected="@(Model.CoordinadoraSeleccionada == coordinadora.Codigo ? "selected" : null)">
-                                            @coordinadora.Nombre
-                                        </option>
-                                    }
-                                }
-                            </select>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-play-circle"></i> Ejecutar Carga
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-footer text-muted">
-                    <small>
-                        <i class="fas fa-info-circle"></i>
-                        El sistema ejecuta automáticamente una carga cada 7 horas.
-                    </small>
-                </div>
+        <div class="contenido-ventana">
+            <!-- Mensaje de estado -->
+            <div class="mensaje-estado @(Model.EsError ? "error" : "")">
+                @Model.Mensaje
             </div>
+
+            <form asp-action="Generar" method="post">
+                <!-- Tipo de Carga -->
+                <div class="seccion-tipo-carga">
+                    <fieldset>
+                        <legend>Tipo de Carga</legend>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="TipoCarga" value="1" checked="@(Model.TipoCarga == TiposCarga.Coordinadora)" />
+                                COORDINADORA
+                            </label>
+                            <label>
+                                <input type="radio" name="TipoCarga" value="2" checked="@(Model.TipoCarga == TiposCarga.Distrito)" />
+                                DISTRITO
+                            </label>
+                            <label>
+                                <input type="radio" name="TipoCarga" value="3" checked="@(Model.TipoCarga == TiposCarga.Todos)" />
+                                TODOS
+                            </label>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <!-- Financiación y Código Programa -->
+                <div class="seccion-financiacion">
+                    <label>FINANCIACIÓN</label>
+                    <select name="FinanciacionSeleccionada" class="combo-financiacion">
+                        <option value=""></option>
+                        @foreach (var financiacion in Model.Financiaciones)
+                        {
+                            var isSelected = Model.FinanciacionSeleccionada == financiacion.Codigo;
+                            <option value="@financiacion.Codigo" selected="@isSelected">
+                                @financiacion.Nombre
+                            </option>
+                        }
+                    </select>
+
+                    <label>CodPrograma</label>
+                    <input type="text" name="CodPrograma" value="@Model.CodPrograma" class="input-codprograma" />
+                </div>
+
+                <!-- Parámetros de carga -->
+                <div class="seccion-parametros">
+                    <fieldset>
+                        <legend>Parámetros de carga</legend>
+                        
+                        <div class="parametros-contenido">
+                            <!-- Calendario -->
+                            <div class="calendario-container">
+                                <div class="calendario-header">
+                                    <button type="button" class="btn-mes" onclick="cambiarMes(-1)">◄</button>
+                                    <span class="mes-actual" id="mesActual">@(new DateTime(Model.Anio, Model.Mes, 1).ToString("MMMM yyyy", new System.Globalization.CultureInfo("es-ES")))</span>
+                                    <button type="button" class="btn-mes" onclick="cambiarMes(1)">►</button>
+                                </div>
+                                
+                                <table class="calendario">
+                                    <thead>
+                                        <tr>
+                                            @foreach (var dia in diasSemana)
+                                            {
+                                                <th>@dia</th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @{
+                                            var diaActual = 1;
+                                            var semanas = (int)Math.Ceiling((diasEnMes + primerDiaSemana) / 7.0);
+                                        }
+                                        @for (int semana = 0; semana < semanas; semana++)
+                                        {
+                                            <tr>
+                                                @for (int diaSemana = 0; diaSemana < 7; diaSemana++)
+                                                {
+                                                    @if ((semana == 0 && diaSemana < primerDiaSemana) || diaActual > diasEnMes)
+                                                    {
+                                                        <td class="dia-vacio"></td>
+                                                    }
+                                                    else
+                                                    {
+                                                        var fecha = new DateTime(Model.Anio, Model.Mes, diaActual);
+                                                        var esHoy = fecha.Date == DateTime.Now.Date;
+                                                        <td class="dia @(esHoy ? "dia-hoy" : "")" data-dia="@diaActual">@diaActual</td>
+                                                        diaActual++;
+                                                    }
+                                                }
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+
+                                <div class="fecha-hoy">
+                                    <strong>Hoy: @DateTime.Now.ToString("dd/MM/yyyy")</strong>
+                                </div>
+
+                                <input type="hidden" name="Mes" value="@Model.Mes" id="mesHidden" />
+                                <input type="hidden" name="Anio" value="@Model.Anio" id="anioHidden" />
+                            </div>
+
+                            <!-- Campos de parámetros -->
+                            <div class="campos-parametros">
+                                <div class="campo-grupo">
+                                    <label>Año</label>
+                                    <input type="number" name="Anio" value="@Model.Anio" class="input-anio" min="2000" max="2099" />
+                                </div>
+
+                                <div class="campo-grupo">
+                                    <label>NumSemana<br/>general</label>
+                                    <input type="number" name="NumSemanaGeneral" value="@Model.NumSemanaGeneral" class="input-numero" />
+                                </div>
+
+                                <div class="campo-grupo">
+                                    <label>1er día semana<br/>general</label>
+                                    <input type="number" name="PrimerDiaSemanaGeneral" value="@Model.PrimerDiaSemanaGeneral" class="input-numero" />
+                                </div>
+
+                                <div class="campo-grupo">
+                                    <label>Nº semanas a<br/>generar (mín 1)</label>
+                                    <input type="number" name="NumSemanasAGenerar" value="@Model.NumSemanasAGenerar" class="input-numero" min="1" />
+                                </div>
+
+                                <div class="campo-grupo">
+                                    <label>(**) Día</label>
+                                    <input type="text" name="FechaDia" value="@Model.FechaDia" class="input-fecha" placeholder="__/__/____" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Expresión Auxiliar -->
+                        <div class="expresion-auxiliar">
+                            <label>(*) ExpAuxiliar</label>
+                            <input type="text" name="ExpAuxiliar" value="@Model.ExpAuxiliar" class="input-exp" />
+                        </div>
+
+                        <!-- Nota -->
+                        <div class="nota">
+                            (*) Usado para cargar la plantilla de una única auxiliar
+                        </div>
+
+                        <!-- Checkboxes -->
+                        <div class="checkboxes">
+                            <label>
+                                <input type="checkbox" name="ActualizarTablaDiaSemana" checked="@Model.ActualizarTablaDiaSemana" />
+                                Actualizar tabla TBL_DiaSemana
+                            </label>
+                            <label>
+                                <input type="checkbox" name="ProyeccionSeparada" checked="@Model.ProyeccionSeparada" />
+                                Proyección separada
+                            </label>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <!-- Botones -->
+                <div class="botones-accion">
+                    <button type="submit" class="btn-generar">GENERAR</button>
+                    <button type="button" class="btn-salir" onclick="window.location.href='@Url.Action("Salir")'">SALIR</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        function actualizarFormulario() {
-            const tipoCarga = document.querySelector('input[name="TipoCarga"]:checked').value;
-            const divDistrito = document.getElementById('divDistrito');
-            const divCoordinadora = document.getElementById('divCoordinadora');
+        let mesActual = @Model.Mes;
+        let anioActual = @Model.Anio;
 
-            divDistrito.style.display = 'none';
-            divCoordinadora.style.display = 'none';
-
-            if (tipoCarga === '2') {
-                divDistrito.style.display = 'block';
-            } else if (tipoCarga === '3') {
-                divCoordinadora.style.display = 'block';
+        function cambiarMes(delta) {
+            mesActual += delta;
+            if (mesActual > 12) {
+                mesActual = 1;
+                anioActual++;
+            } else if (mesActual < 1) {
+                mesActual = 12;
+                anioActual--;
             }
+            
+            document.getElementById('mesHidden').value = mesActual;
+            document.getElementById('anioHidden').value = anioActual;
+            
+            // Recargar la página con el nuevo mes
+            window.location.href = '?mes=' + mesActual + '&anio=' + anioActual;
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
-            actualizarFormulario();
+        // Permitir seleccionar días del calendario
+        document.querySelectorAll('.dia:not(.dia-vacio)').forEach(function(celda) {
+            celda.addEventListener('click', function() {
+                document.querySelectorAll('.dia').forEach(d => d.classList.remove('seleccionado'));
+                this.classList.add('seleccionado');
+            });
         });
     </script>
 }

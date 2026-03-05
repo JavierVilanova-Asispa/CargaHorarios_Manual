@@ -1,4 +1,4 @@
-namespace CargaDatos.Web.Services
+namespace CargadorHorario.Web.Services
 {
     public class CargaDatosProgramadaService : BackgroundService
     {

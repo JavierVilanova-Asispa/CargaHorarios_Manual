@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>CargaDatos.Web</RootNamespace>
+    <RootNamespace>CargadorHorario.Web</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

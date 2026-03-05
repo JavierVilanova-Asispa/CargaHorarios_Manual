@@ -7,9 +7,9 @@ Si obtienes el error "ICargaDatosService no está definido", sigue estos pasos:
 Asegúrate de que tienes esta estructura EXACTA:
 
 ```
-CargaDatos.Web/
-├── CargaDatos.Web.sln
-├── CargaDatos.Web.csproj
+CargadorHorario.Web/
+├── CargadorHorario.Web.sln
+├── CargadorHorario.Web.csproj
 ├── Program.cs
 ├── GlobalUsings.cs
 ├── appsettings.json
@@ -36,7 +36,7 @@ CargaDatos.Web/
 1. Cierra Visual Studio completamente
 2. Elimina las carpetas `bin` y `obj` si existen
 3. Abre Visual Studio 2022
-4. Abre el archivo `CargaDatos.Web.sln`
+4. Abre el archivo `CargadorHorario.Web.sln`
 5. Ve a `Build` → `Clean Solution`
 6. Ve a `Build` → `Rebuild Solution`
 
@@ -61,7 +61,7 @@ Si hay errores, míralos detenidamente. El output te dirá exactamente qué arch
 
 En Visual Studio, en el Solution Explorer, deberías ver:
 
-- ▼ CargaDatos.Web
+- ▼ CargadorHorario.Web
   - ▼ Services
     - ICargaDatosService.cs  ← ¿Lo ves aquí?
     - CargaDatosService.cs
@@ -78,7 +78,7 @@ Si NO ves la carpeta Services o los archivos dentro:
 Abre el archivo `Services/ICargaDatosService.cs` y verifica que contenga:
 
 ```csharp
-namespace CargaDatos.Web.Services
+namespace CargadorHorario.Web.Services
 {
     public interface ICargaDatosService
     {
@@ -94,7 +94,7 @@ namespace CargaDatos.Web.Services
 ## Opción 6: Recargar el proyecto
 
 En Visual Studio:
-1. Click derecho en el proyecto "CargaDatos.Web"
+1. Click derecho en el proyecto "CargadorHorario.Web"
 2. Selecciona "Unload Project"
 3. Click derecho nuevamente
 4. Selecciona "Reload Project"
@@ -110,7 +110,7 @@ Descarga nuevamente todos los archivos y asegúrate de:
 
 ```bash
 # Ir a la carpeta del proyecto
-cd ruta/a/CargaDatos.Web
+cd ruta/a/CargadorHorario.Web
 
 # Verificar que el archivo existe
 dir Services\ICargaDatosService.cs    # En Windows
